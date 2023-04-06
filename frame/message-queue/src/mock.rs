@@ -25,14 +25,16 @@ use super::*;
 use crate as pallet_message_queue;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, MapSuccess, Everything, EitherOfWithArg, AsEnsureOriginWithContains, ConstU64, EitherOf},
+	traits::{
+		AsEnsureOriginWithContains, ConstU32, ConstU64, EitherOfWithArg, Everything, MapSuccess, *,
+	},
 };
+use frame_system::{EnsureRoot, EnsureSignedBy};
 use sp_core::H256;
 use sp_runtime::{
 	testing::Header,
-	traits::{BlakeTwo256, IdentityLookup},
+	traits::{BlakeTwo256, ChainedTryMorphInto, IdentityLookup},
 };
-use frame_system::{EnsureRoot, EnsureSignedBy, EnsureSigned};
 use sp_std::collections::btree_map::BTreeMap;
 
 type UncheckedExtrinsic = frame_system::mocking::MockUncheckedExtrinsic<Test>;
@@ -83,37 +85,24 @@ pub const BOB: AccountId = 2;
 pub const CHARLIE: AccountId = 3;
 
 parameter_types! {
-	pub DiscardOrigins: Vec<AccountId> = vec![ALICE, BOB, CHARLIE];
+	pub AliceBobCharlie: Vec<AccountId> = vec![ALICE, BOB, CHARLIE];
 }
 
-pub struct DiscardOriginMapping;
-impl frame_support::traits::ContainsPair<AccountId, MessageOriginOf<Test>> for DiscardOriginMapping {
-	fn contains(key: &AccountId, queue: &MessageOriginOf<Test>) -> bool {
-		// Define which origin can discard from which queue.
-		// In this case we can trivially whitelist by account ID. Normally you would want a proper mapping between AccountId and power-level.
-		match *key {
-			ALICE => matches!(queue, MessageOrigin::Here),
-			BOB => matches!(queue, MessageOrigin::There),
-			CHARLIE => matches!(queue, MessageOrigin::Everywhere(_)),
-			_ => false,
-		}
-	}
-}
-
-use frame_support::traits::*;
-use sp_runtime::traits::{ChainedTryMorphInto, TryMorphInto};
-
+/// The origin that can discard overweight messages.
 type DiscardOverweightOrigin = EitherOfWithArg<
 	// Root can discard from any queue.
 	AsEnsureOriginWithContains<EnsureRoot<AccountId>, Everything>,
-	//
-	//MapSuccess<AsEnsureOriginWithContains<EnsureSigned<AccountId>, Everything>, ()>,
-	MapSuccess<AsEnsureOriginWithContains<
-		TryMapSuccess<
-			EnsureSignedBy<IsInVec<DiscardOrigins>, AccountId>,
-			ChainedTryMorphInto<u32, MessageOrigin>>,
-		Everything>,
-	()>,
+	// `Alice`, `Bob` and `Charlie` can discard from their own queue.
+	MapSuccess<
+		AsEnsureOriginWithContains<
+			TryMapSuccess<
+				EnsureSignedBy<IsInVec<AliceBobCharlie>, AccountId>,
+				ChainedTryMorphInto<u32, MessageOrigin>,
+			>,
+			Everything,
+		>,
+		(),
+	>,
 >;
 
 parameter_types! {

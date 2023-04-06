@@ -1334,3 +1334,14 @@ fn enqueue_messages_works() {
 		assert_eq!(book.count as usize, Pages::<Test>::iter().count());
 	});
 }
+
+#[test]
+#[cfg(feature = "runtime-benchmarks")]
+fn bench_setup_sane() {
+	new_test_ext::<Test>().execute_with(|| {
+		let queue: MessageOriginOf<Test> = 0.into();
+		let _origin: <Test as frame_system::Config>::RuntimeOrigin =
+			<Test as crate::Config>::DiscardOverweightOrigin::try_successful_origin(&queue)
+				.expect("Benchmarks need a valid discard origin when running them as tests");
+	});
+}

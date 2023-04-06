@@ -347,14 +347,15 @@ impl<T, A: TryInto<T>> TryMorph<A> for TryMorphInto<T> {
 	}
 }
 
+/// Chain two `TryMorh` impls together.
+///
+/// Can be used recursively.
 pub struct ChainedTryMorphInto<S, T>(sp_std::marker::PhantomData<(S, T)>);
 impl<S: TryInto<T>, T, A: TryInto<S>> TryMorph<A> for ChainedTryMorphInto<S, T> {
 	type Outcome = T;
-	
+
 	fn try_morph(a: A) -> Result<T, ()> {
-		let s: S = a.try_into().map_err(|_| ())?;
-		let t: T = s.try_into().map_err(|_| ())?;
-		Ok(t)
+		a.try_into().map_err(|_| ())?.try_into().map_err(|_| ())
 	}
 }
 

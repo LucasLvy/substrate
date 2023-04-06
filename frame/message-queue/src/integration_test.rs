@@ -32,7 +32,7 @@ use crate::{
 use crate as pallet_message_queue;
 use frame_support::{
 	parameter_types,
-	traits::{ConstU32, AsEnsureOriginWithArg, ConstU64},
+	traits::{AsEnsureOriginWithArg, ConstU32, ConstU64},
 };
 use frame_system::EnsureRoot;
 use rand::{rngs::StdRng, Rng, SeedableRng};

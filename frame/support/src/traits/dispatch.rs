@@ -17,7 +17,10 @@
 
 //! Traits for dealing with dispatching calls and the origin from which they are dispatched.
 
-use crate::{traits::ContainsPair, dispatch::{DispatchResultWithPostInfo, Parameter, RawOrigin}};
+use crate::{
+	dispatch::{DispatchResultWithPostInfo, Parameter, RawOrigin},
+	traits::ContainsPair,
+};
 use codec::MaxEncodedLen;
 use sp_runtime::{
 	traits::{BadOrigin, Get, Member, Morph, TryMorph},
@@ -194,8 +197,12 @@ impl<OuterOrigin, Argument, EO: EnsureOrigin<OuterOrigin>>
 
 pub struct AsEnsureOriginWithContains<EO, Predicate>(sp_std::marker::PhantomData<(EO, Predicate)>);
 
-impl<OuterOrigin: Clone, Argument, EO: EnsureOrigin<OuterOrigin>, Predicate: ContainsPair<EO::Success, Argument>>
-	EnsureOriginWithArg<OuterOrigin, Argument> for AsEnsureOriginWithContains<EO, Predicate>
+impl<
+		OuterOrigin: Clone,
+		Argument,
+		EO: EnsureOrigin<OuterOrigin>,
+		Predicate: ContainsPair<EO::Success, Argument>,
+	> EnsureOriginWithArg<OuterOrigin, Argument> for AsEnsureOriginWithContains<EO, Predicate>
 {
 	/// A return type.
 	type Success = EO::Success;
@@ -243,8 +250,7 @@ impl<O, Original: EnsureOrigin<O>, Mutator: Morph<Original::Success>> EnsureOrig
 	}
 }
 
-impl<OuterOrigin, Original, Mutator, Argument>
-	EnsureOriginWithArg<OuterOrigin, Argument> 
+impl<OuterOrigin, Original, Mutator, Argument> EnsureOriginWithArg<OuterOrigin, Argument>
 	for MapSuccess<Original, Mutator>
 where
 	OuterOrigin: Clone,
@@ -252,7 +258,7 @@ where
 	Mutator: Morph<Original::Success>,
 {
 	type Success = Mutator::Outcome;
-	
+
 	fn try_origin(o: OuterOrigin, a: &Argument) -> Result<Self::Success, OuterOrigin> {
 		Ok(Mutator::morph(Original::try_origin(o, a)?))
 	}

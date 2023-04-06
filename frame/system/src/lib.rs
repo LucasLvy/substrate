@@ -90,8 +90,8 @@ use frame_support::{
 	},
 	storage::{self, StorageStreamIter},
 	traits::{
-		ConstU32, Contains, EnsureOrigin, Get, HandleLifetime,
-		OnKilledAccount, OnNewAccount, OriginTrait, PalletInfo, SortedMembers, StoredMap, TypedGet,
+		ConstU32, Contains, EnsureOrigin, Get, HandleLifetime, OnKilledAccount, OnNewAccount,
+		OriginTrait, PalletInfo, SortedMembers, StoredMap, TypedGet,
 	},
 	Parameter,
 };
@@ -804,7 +804,7 @@ where
 	type Success = EO::Success;
 
 	fn try_origin(o: O, arg: &Argument) -> Result<(), O> {
-		
+
 
 }*/
 
