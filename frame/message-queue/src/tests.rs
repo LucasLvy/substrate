@@ -1089,6 +1089,26 @@ fn execute_overweight_works() {
 }
 
 #[test]
+fn discarding_overweight_works() {
+	new_test_ext::<Test>().execute_with(|| {});
+}
+
+#[test]
+fn discarding_overweight_wrong_bad_origin() {
+	new_test_ext::<Test>().execute_with(|| {
+		assert_noop!(
+			MessageQueue::discard_overweight(
+				frame_system::RawOrigin::Signed(10).into(),
+				MessageOrigin::Here,
+				0,
+				0
+			),
+			DispatchError::BadOrigin
+		);
+	});
+}
+
+#[test]
 fn permanently_overweight_book_unknits() {
 	use MessageOrigin::*;
 

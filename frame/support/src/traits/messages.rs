@@ -72,6 +72,12 @@ pub enum ExecuteOverweightError {
 	InsufficientWeight,
 }
 
+#[derive(Eq, PartialEq, RuntimeDebug)]
+pub enum DiscardOverweightError {
+	/// The referenced message was not found.
+	NotFound,
+}
+
 /// Can service queues and execute overweight messages.
 pub trait ServiceQueues {
 	/// Addresses a specific overweight message.
@@ -85,12 +91,19 @@ pub trait ServiceQueues {
 	fn service_queues(weight_limit: Weight) -> Weight;
 
 	/// Executes a message that could not be executed by [`Self::service_queues()`] because it was
-	/// temporarily overweight.
+	/// permanently overweight.
 	fn execute_overweight(
 		_weight_limit: Weight,
 		_address: Self::OverweightMessageAddress,
 	) -> Result<Weight, ExecuteOverweightError> {
 		Err(ExecuteOverweightError::NotFound)
+	}
+
+	/// Discard a message that was marked as permanently overweight by [`Self::service_queues()`].
+	fn discard_overweight(
+		_address: Self::OverweightMessageAddress,
+	) -> Result<(), DiscardOverweightError> {
+		Err(DiscardOverweightError::NotFound)
 	}
 }
 

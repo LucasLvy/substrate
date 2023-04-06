@@ -90,8 +90,8 @@ use frame_support::{
 	},
 	storage::{self, StorageStreamIter},
 	traits::{
-		ConstU32, Contains, EnsureOrigin, Get, HandleLifetime, OnKilledAccount, OnNewAccount,
-		OriginTrait, PalletInfo, SortedMembers, StoredMap, TypedGet,
+		ConstU32, Contains, EnsureOrigin, Get, HandleLifetime,
+		OnKilledAccount, OnNewAccount, OriginTrait, PalletInfo, SortedMembers, StoredMap, TypedGet,
 	},
 	Parameter,
 };
@@ -789,6 +789,24 @@ impl<O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>, Acco
 		Ok(O::from(RawOrigin::Root))
 	}
 }
+/*
+pub struct EnsureOriginWithContains<AccountId, EO, Predicate>(
+	sp_std::marker::PhantomData<(AccountId, EO, Predicate)>,
+);
+
+impl<O, Argument, AccountId, EO, Predicate> EnsureOriginWithArg<O, Argument>
+	for EnsureOriginWithContains<AccountId, EO, Predicate>
+where
+	O: Into<Result<RawOrigin<AccountId>, O>> + From<RawOrigin<AccountId>>,
+	EO: EnsureOrigin<O>,
+	Predicate: Contains<Argument>,
+{
+	type Success = EO::Success;
+
+	fn try_origin(o: O, arg: &Argument) -> Result<(), O> {
+		
+
+}*/
 
 /// Ensure the origin is Root and return the provided `Success` value.
 pub struct EnsureRootWithSuccess<AccountId, Success>(

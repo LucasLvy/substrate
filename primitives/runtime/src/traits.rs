@@ -303,6 +303,14 @@ impl<T> Morph<T> for Identity {
 	}
 }
 
+impl<T> Morph<T> for () {
+	type Outcome = ();
+
+	fn morph(_: T) -> () {
+		()
+	}
+}
+
 /// Extensible conversion trait. Generic over only source type, with destination type being
 /// associated.
 pub trait TryMorph<A> {
@@ -336,6 +344,17 @@ impl<T, A: TryInto<T>> TryMorph<A> for TryMorphInto<T> {
 	type Outcome = T;
 	fn try_morph(a: A) -> Result<T, ()> {
 		a.try_into().map_err(|_| ())
+	}
+}
+
+pub struct ChainedTryMorphInto<S, T>(sp_std::marker::PhantomData<(S, T)>);
+impl<S: TryInto<T>, T, A: TryInto<S>> TryMorph<A> for ChainedTryMorphInto<S, T> {
+	type Outcome = T;
+	
+	fn try_morph(a: A) -> Result<T, ()> {
+		let s: S = a.try_into().map_err(|_| ())?;
+		let t: T = s.try_into().map_err(|_| ())?;
+		Ok(t)
 	}
 }
 
