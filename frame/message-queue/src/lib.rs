@@ -473,9 +473,12 @@ pub mod pallet {
 		/// removed.
 		type QueueChangeHandler: OnQueueChanged<<Self::MessageProcessor as ProcessMessage>::Origin>;
 
+		/// The only origin that can discard overweight messages via [`Self::discard_overweight`].
+		type OverweightOrigin: EnsureOrigin<Self::RuntimeOrigin>;
+
 		/// The size of the page; this implies the maximum message size which can be sent.
-		///
-		/// A good value depends on the expected message sizes, their weights, the weight that is
+		/// 
+		/// A good value depends on the expected message sizes,  their weights, the weight that is 
 		/// available for processing them and the maximal needed message size. The maximal message
 		/// size is slightly lower than this as defined by [`MaxMessageLenOf`].
 		#[pallet::constant]
@@ -619,6 +622,19 @@ pub mod pallet {
 			let actual_weight =
 				Self::do_execute_overweight(message_origin, page, index, weight_limit)?;
 			Ok(Some(actual_weight).into())
+		}
+
+		#[pallet::call_index(2)]
+		#[pallet::weight({1337})]
+		pub fn discard_overweight(
+			origin: OriginFor<T>,
+			message_origin: MessageOriginOf<T>,
+			page: PageIndex,
+			index: T::Size,
+		) -> DispatchResult {
+			let _ = T::OverweightOrigin::ensure_origin(origin)?;
+			Self::do_discard_overweight(message_origin, page, index)?;
+			Ok(())
 		}
 	}
 }
@@ -795,6 +811,36 @@ impl<T: Config> Pallet<T> {
 		BookStateFor::<T>::insert(origin, book_state);
 	}
 
+	pub fn do_discard_overweight(
+		_origin: MessageOriginOf<T>,
+		_page_index: PageIndex,
+		_index: T::Size,
+	) -> Result<(), Error<T>> {
+		let (mut page, mut book_state, pos, payload) = Self::extract_overweight(&origin, page_index, index)?;
+
+		page.note_processed_at_pos(pos);
+		book_for.message_count.saturating_dec();
+		book_state.size.saturating_reduce(payload.len() as u64);
+		// TODO
+
+		Ok(())
+	}
+
+	fn extract_overweight(queue: &MessageOriginOf<T>, page_index: PageIndex, message: T::Size) -> Result<(PageOf<T>, BookStateOf<T>, usize, Vec<u8>), Error<T>> {
+		let book_state = BookStateFor::<T>::get(queue);
+		let page = Pages::<T>::get(queue, page_index).ok_or(Error::<T>::NoPage)?;
+		let (pos, is_processed, payload) =
+			page.peek_index(message.into() as usize).ok_or(Error::<T>::NoMessage)?;
+		ensure!(
+			page_index < book_state.begin ||
+				(page_index == book_state.begin && pos < page.first.into() as usize),
+			Error::<T>::Queued
+		);
+		ensure!(!is_processed, Error::<T>::AlreadyProcessed);
+		let msg = payload.to_vec();
+		Ok((page, book_state, pos, msg))
+	}
+
 	/// Try to execute a single message that was marked as overweight.
 	///
 	/// The `weight_limit` is the weight that can be consumed to execute the message. The base
@@ -805,24 +851,16 @@ impl<T: Config> Pallet<T> {
 		index: T::Size,
 		weight_limit: Weight,
 	) -> Result<Weight, Error<T>> {
-		let mut book_state = BookStateFor::<T>::get(&origin);
-		let mut page = Pages::<T>::get(&origin, page_index).ok_or(Error::<T>::NoPage)?;
-		let (pos, is_processed, payload) =
-			page.peek_index(index.into() as usize).ok_or(Error::<T>::NoMessage)?;
+		let (mut page, mut book_state, pos, payload) = Self::extract_overweight(&origin, page_index, index)?;
+
 		let payload_len = payload.len() as u64;
-		ensure!(
-			page_index < book_state.begin ||
-				(page_index == book_state.begin && pos < page.first.into() as usize),
-			Error::<T>::Queued
-		);
-		ensure!(!is_processed, Error::<T>::AlreadyProcessed);
 		use MessageExecutionStatus::*;
 		let mut weight_counter = WeightMeter::from_limit(weight_limit);
 		match Self::process_message_payload(
 			origin.clone(),
 			page_index,
 			index,
-			payload,
+			payload.as_slice(),
 			&mut weight_counter,
 			Weight::MAX,
 			// ^^^ We never recognise it as permanently overweight, since that would result in an

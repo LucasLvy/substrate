@@ -94,6 +94,7 @@ impl Config for Test {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = MockedWeightInfo;
 	type MessageProcessor = CountingMessageProcessor;
+	type OverweightOrigin = frame_system::EnsureRoot<Self::AccountId>;
 	type Size = u32;
 	type QueueChangeHandler = ();
 	type HeapSize = HeapSize;
