@@ -528,6 +528,8 @@ pub enum DispatchError {
 		#[cfg_attr(feature = "std", serde(skip_deserializing))]
 		&'static str,
 	),
+	/// Function is not relevant to Starknet ERC-20.
+	NotImplementedForStarknet,
 	/// Failed to lookup some data.
 	CannotLookup,
 	/// A bad origin.
@@ -659,6 +661,7 @@ impl From<DispatchError> for &'static str {
 		match err {
 			Other(msg) => msg,
 			CannotLookup => "Cannot lookup",
+			NotImplementedForStarknet => "Not implemented for Starknet ERC-20",
 			BadOrigin => "Bad origin",
 			Module(ModuleError { message, .. }) => message.unwrap_or("Unknown module error"),
 			ConsumerRemaining => "Consumer remaining",
@@ -690,6 +693,7 @@ impl traits::Printable for DispatchError {
 		match self {
 			Other(err) => err.print(),
 			CannotLookup => "Cannot lookup".print(),
+			NotImplementedForStarknet => "Not implemented for Starknet ERC-20".print(),
 			BadOrigin => "Bad origin".print(),
 			Module(ModuleError { index, error, message }) => {
 				index.print();

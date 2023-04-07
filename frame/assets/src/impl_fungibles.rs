@@ -23,8 +23,8 @@ impl<T: Config<I>, I: 'static> fungibles::Inspect<<T as SystemConfig>::AccountId
 	type AssetId = T::AssetId;
 	type Balance = T::Balance;
 
-	fn total_issuance(asset: Self::AssetId) -> Self::Balance {
-		Asset::<T, I>::get(asset).map(|x| x.supply).unwrap_or_else(Zero::zero)
+	fn total_issuance(_asset: Self::AssetId) -> Self::Balance {
+		Self::Balance::default()
 	}
 
 	fn minimum_balance(asset: Self::AssetId) -> Self::Balance {
@@ -129,46 +129,34 @@ impl<T: Config<I>, I: 'static> fungibles::Unbalanced<T::AccountId> for Pallet<T,
 	fn set_balance(_: Self::AssetId, _: &T::AccountId, _: Self::Balance) -> DispatchResult {
 		unreachable!("set_balance is not used if other functions are impl'd");
 	}
-	fn set_total_issuance(id: T::AssetId, amount: Self::Balance) {
-		Asset::<T, I>::mutate_exists(id, |maybe_asset| {
-			if let Some(ref mut asset) = maybe_asset {
-				asset.supply = amount
-			}
-		});
-	}
+	fn set_total_issuance(_id: T::AssetId, _amount: Self::Balance) {}
 	fn decrease_balance(
-		asset: T::AssetId,
-		who: &T::AccountId,
-		amount: Self::Balance,
+		_asset: T::AssetId,
+		_who: &T::AccountId,
+		_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
-		let f = DebitFlags { keep_alive: false, best_effort: false };
-		Self::decrease_balance(asset, who, amount, f, |_, _| Ok(()))
+		Err(DispatchError::NotImplementedForStarknet)
 	}
 	fn decrease_balance_at_most(
-		asset: T::AssetId,
-		who: &T::AccountId,
-		amount: Self::Balance,
+		_asset: T::AssetId,
+		_who: &T::AccountId,
+		_amount: Self::Balance,
 	) -> Self::Balance {
-		let f = DebitFlags { keep_alive: false, best_effort: true };
-		Self::decrease_balance(asset, who, amount, f, |_, _| Ok(())).unwrap_or(Zero::zero())
+		Self::Balance::default()
 	}
 	fn increase_balance(
-		asset: T::AssetId,
-		who: &T::AccountId,
-		amount: Self::Balance,
+		_asset: T::AssetId,
+		_who: &T::AccountId,
+		_amount: Self::Balance,
 	) -> Result<Self::Balance, DispatchError> {
-		Self::increase_balance(asset, who, amount, |_| Ok(()))?;
-		Ok(amount)
+		Err(DispatchError::NotImplementedForStarknet)
 	}
 	fn increase_balance_at_most(
-		asset: T::AssetId,
-		who: &T::AccountId,
-		amount: Self::Balance,
+		_asset: T::AssetId,
+		_who: &T::AccountId,
+		_amount: Self::Balance,
 	) -> Self::Balance {
-		match Self::increase_balance(asset, who, amount, |_| Ok(())) {
-			Ok(()) => amount,
-			Err(_) => Zero::zero(),
-		}
+		Self::Balance::default()
 	}
 }
 
@@ -273,20 +261,20 @@ impl<T: Config<I>, I: 'static> fungibles::approvals::Mutate<<T as SystemConfig>:
 impl<T: Config<I>, I: 'static> fungibles::roles::Inspect<<T as SystemConfig>::AccountId>
 	for Pallet<T, I>
 {
-	fn owner(asset: T::AssetId) -> Option<<T as SystemConfig>::AccountId> {
-		Asset::<T, I>::get(asset).map(|x| x.owner)
+	fn owner(_asset: T::AssetId) -> Option<<T as SystemConfig>::AccountId> {
+		None
 	}
 
-	fn issuer(asset: T::AssetId) -> Option<<T as SystemConfig>::AccountId> {
-		Asset::<T, I>::get(asset).map(|x| x.issuer)
+	fn issuer(_asset: T::AssetId) -> Option<<T as SystemConfig>::AccountId> {
+		None
 	}
 
-	fn admin(asset: T::AssetId) -> Option<<T as SystemConfig>::AccountId> {
-		Asset::<T, I>::get(asset).map(|x| x.admin)
+	fn admin(_asset: T::AssetId) -> Option<<T as SystemConfig>::AccountId> {
+		None
 	}
 
-	fn freezer(asset: T::AssetId) -> Option<<T as SystemConfig>::AccountId> {
-		Asset::<T, I>::get(asset).map(|x| x.freezer)
+	fn freezer(_asset: T::AssetId) -> Option<<T as SystemConfig>::AccountId> {
+		None
 	}
 }
 

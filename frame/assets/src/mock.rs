@@ -193,7 +193,7 @@ pub(crate) fn clear_frozen_balance(asset: u32, who: u64) {
 }
 
 pub(crate) fn hooks() -> Vec<Hook> {
-	Hooks::get().clone()
+	Hooks::get()
 }
 
 pub(crate) fn take_hooks() -> Vec<Hook> {
@@ -206,7 +206,7 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 	let config: pallet_assets::GenesisConfig<Test> = pallet_assets::GenesisConfig {
 		assets: vec![
 			// id, owner, is_sufficient, min_balance
-			(999, 0, true, 1),
+			(999, true, 1),
 		],
 		metadata: vec![
 			// id, name, symbol, decimals
@@ -222,7 +222,7 @@ pub(crate) fn new_test_ext() -> sp_io::TestExternalities {
 
 	let mut ext: sp_io::TestExternalities = storage.into();
 	// Clear thread local vars for https://github.com/paritytech/substrate/issues/10479.
-	ext.execute_with(|| take_hooks());
+	ext.execute_with(take_hooks);
 	ext.execute_with(|| System::set_block_number(1));
 	ext
 }

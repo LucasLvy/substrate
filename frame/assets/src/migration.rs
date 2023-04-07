@@ -33,23 +33,17 @@ pub mod v1 {
 		pub deposit: DepositBalance,
 		pub min_balance: Balance,
 		pub is_sufficient: bool,
-		pub accounts: u32,
-		pub sufficients: u32,
-		pub approvals: u32,
+		pub accounts: u128,
+		pub sufficients: u128,
+		pub approvals: u128,
 		pub is_frozen: bool,
 	}
 
 	impl<Balance, AccountId, DepositBalance> OldAssetDetails<Balance, AccountId, DepositBalance> {
-		fn migrate_to_v1(self) -> AssetDetails<Balance, AccountId, DepositBalance> {
+		fn migrate_to_v1(self) -> AssetDetails<Balance> {
 			let status = if self.is_frozen { AssetStatus::Frozen } else { AssetStatus::Live };
 
 			AssetDetails {
-				owner: self.owner,
-				issuer: self.issuer,
-				admin: self.admin,
-				freezer: self.freezer,
-				supply: self.supply,
-				deposit: self.deposit,
 				min_balance: self.min_balance,
 				is_sufficient: self.is_sufficient,
 				accounts: self.accounts,
